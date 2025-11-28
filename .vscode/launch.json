@@ -1,0 +1,41 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "RealmsOfRiftborne",
+            "request": "launch",
+            "mainClass": "com.ror.gameengine.RealmsOfRiftborne",
+            "projectName": "JavaGameOOP_e0ff182f"
+        },
+        {
+            "type": "java",
+            "name": "RealmsOfRiftborne",
+            "request": "launch",
+            "mainClass": "com.ror.gameengine.RealmsOfRiftborne",
+            "projectName": "JavaGameOOP_a5934f53"
+        },
+        {
+            "type": "java",
+            "name": "RealmsOfRiftborne",
+            "request": "launch",
+            "mainClass": "com.ror.gameengine.RealmsOfRiftborne",
+            "projectName": "JavaGameOOP_4a8c2692"
+        },
+        {
+            "type": "java",
+            "name": "Launch RealmsOfRiftborne",
+            "request": "launch",
+            "mainClass": "RealmsOfRiftborne",
+            "projectName": "JavaGameOOP",
+            "cwd": "${workspaceFolder}",
+            "vmArgs": "",
+            "args": "",
+            "classPaths": [
+                "${workspaceFolder}/com/ror/gamemodel",
+                "${workspaceFolder}/com/ror/gameengine",
+                "${workspaceFolder}"
+            ]
+        }
+    ]
+}
