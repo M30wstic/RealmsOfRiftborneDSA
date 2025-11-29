@@ -3,9 +3,13 @@ package com.ror.gameengine;
 import com.ror.gamemodel.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseMotionAdapter;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+
 
 public class BattlePanel extends JPanel {
 
@@ -30,9 +34,12 @@ public class BattlePanel extends JPanel {
 
 
     private GameFrame parent;
+    private JPanel exitOverlay, glass;
+    private JScrollPane logScroll;
+    private JLayeredPane layeredPane;
     private JButton backButton;
     private JTextArea battleLog;
-    private JButton skillBtn1, skillBtn2, skillBtn3, backBtn;
+    private JButton skillBtn1, skillBtn2, skillBtn3;
     private JLabel playerHPLabel, enemyHPLabel, playerNameLabel, enemyNameLabel;
     private JLabel playerLevelLabel;
     private int healAmount;
@@ -58,90 +65,106 @@ public class BattlePanel extends JPanel {
     public BattlePanel(GameFrame parent) {
         this.parent = parent;
         setLayout(new BorderLayout());
+        //createExitOverlay();
         setBackground(Color.BLACK);
 
-        // TOP (enemy framed box and corner menu and save(soon) buttons)
+        // TOP BAR (title + icons + enemy box)
         JPanel topContainer = new JPanel(new BorderLayout());
         topContainer.setBackground(Color.BLACK);
         topContainer.setBorder(new EmptyBorder(10, 12, 10, 12));
 
-        //Left game title
+        //LEFT GAME TITLE
         JLabel titleLabel = new JLabel("Realms of Riftborne", SwingConstants.LEFT);
         titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(pixelFont.deriveFont(14f));
+        titleLabel.setFont(pixelFont.deriveFont(16f));
         topContainer.add(titleLabel, BorderLayout.WEST);
 
-        //Right menu + save buttons placeholder
         JPanel cornerIcons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         cornerIcons.setBackground(Color.BLACK);
-        JButton saveIcon = new JButton("\uD83D\uDCBE"); // floppy icon placeholder
-        JButton menuIcon = new JButton("\u2630"); //menu icon placeholder
+
+        JButton saveIcon = new JButton("\uD83D\uDCBE");
+        JButton menuIcon = new JButton("☰");
+
         styleIconButton(saveIcon);
         styleIconButton(menuIcon);
+
         cornerIcons.add(saveIcon);
         cornerIcons.add(menuIcon);
         topContainer.add(cornerIcons, BorderLayout.EAST);
 
-        //Enemy frame box in center
+        menuIcon.addActionListener(e -> showExitOverlay());
+
+        // Enemy frame
         JPanel enemyOuterFrame = new JPanel(new BorderLayout());
         enemyOuterFrame.setBackground(Color.BLACK);
         enemyOuterFrame.setBorder(new EmptyBorder(10, 200, 10, 200));
 
+        // Enemy frame uses the SAME layout style as player frame
         JPanel enemyFrame = new JPanel(new BorderLayout(10, 0));
         enemyFrame.setBackground(Color.BLACK);
         enemyFrame.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(Color.WHITE, 2),
-            new EmptyBorder(8, 12, 8, 12)
+                new LineBorder(Color.WHITE, 2),
+                new EmptyBorder(10, 12, 10, 12)
         ));
 
+        // LEFT — Enemy Name
         enemyNameLabel = new JLabel("Enemy", SwingConstants.CENTER);
-        enemyNameLabel.setForeground(Color.WHITE);  
-        enemyNameLabel.setFont(pixelFont.deriveFont(18f));
-        enemyNameLabel.setBorder(new EmptyBorder(0, 6, 0, 6)); 
-        
-        enemyHPLabel = new JLabel("HP: --", SwingConstants.CENTER);
-        enemyHPLabel.setForeground(Color.WHITE);
-        enemyNameLabel.setFont(pixelFont.deriveFont(16f));
-        enemyHPLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        enemyNameLabel.setForeground(Color.WHITE);
+        enemyNameLabel.setFont(pixelFont.deriveFont(20f));
+        enemyNameLabel.setBorder(new EmptyBorder(0, 6, 0, 6));
+        enemyFrame.add(enemyNameLabel, BorderLayout.WEST);
 
-        // initialize HP bars with dummy values — will be updated in startBattle()
-        enemyHPBar = new HPBar(1, 1); // dummy init; updated in startBattle()
+        // CENTER — HP BAR
+        enemyHPBar = new HPBar(1, 1);
         enemyHPBar.setPreferredSize(new Dimension(300, 18));
 
         JPanel enemyCenter = new JPanel(new BorderLayout(6, 0));
         enemyCenter.setBackground(Color.BLACK);
         enemyCenter.add(enemyHPBar, BorderLayout.CENTER);
 
-        enemyFrame.add(enemyNameLabel, BorderLayout.WEST);
         enemyFrame.add(enemyCenter, BorderLayout.CENTER);
-        enemyFrame.add(enemyHPLabel, BorderLayout.EAST);
+
+        // RIGHT — HP LABEL
+        enemyHPLabel = new JLabel("HP: --/--", SwingConstants.RIGHT);
+        enemyHPLabel.setForeground(Color.WHITE);
+        enemyHPLabel.setFont(pixelFont.deriveFont(18f));
+
+        JPanel enemyRight = new JPanel(new BorderLayout());
+        enemyRight.setBackground(Color.BLACK);
+        enemyRight.add(enemyHPLabel, BorderLayout.EAST);
+
+        enemyFrame.add(enemyRight, BorderLayout.EAST);
 
         enemyOuterFrame.add(enemyFrame, BorderLayout.CENTER);
-        topContainer.add(enemyOuterFrame, BorderLayout.CENTER);
+        topContainer.add(enemyOuterFrame, BorderLayout.SOUTH);
 
-        add(topContainer, BorderLayout.NORTH);
-        
-        // Center: battle log
+
+        // CENTER — BATTLE LOG
         battleLog = new JTextArea();
         battleLog.setEditable(false);
         battleLog.setBackground(Color.BLACK);
         battleLog.setForeground(Color.WHITE);
-        battleLog.setFont(pixelFont.deriveFont(18f)); //under testing
-        JScrollPane logScroll = new JScrollPane(battleLog);
+        battleLog.setFont(pixelFont.deriveFont(18f));
+
+        logScroll = new JScrollPane(battleLog);
         logScroll.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 1, 0, Color.WHITE), 
+            BorderFactory.createMatteBorder(1, 0, 1, 0, Color.WHITE),
             new EmptyBorder(12, 12, 12, 12)
         ));
 
-        logScroll.setBackground(Color.BLACK);
-        add(logScroll, BorderLayout.CENTER);
+        logScroll.getViewport().setBackground(Color.BLACK);
 
-        // Bottom: player frame and skill buttons
+        logScroll.setOpaque(false);
+        logScroll.getViewport().setOpaque(true);
+
+        logScroll.getVerticalScrollBar().setUI(new WhiteScrollBarUI());
+        logScroll.getHorizontalScrollBar().setUI(new WhiteScrollBarUI());
+        
+        // BOTTOM — PLAYER FRAME + SKILLS
         JPanel bottomContainer = new JPanel(new BorderLayout());
         bottomContainer.setBackground(Color.BLACK);
         bottomContainer.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        //PLayer framed stats
         JPanel playerFrame = new JPanel(new BorderLayout(10, 0));
         playerFrame.setBackground(Color.BLACK);
         playerFrame.setBorder(BorderFactory.createCompoundBorder(
@@ -151,90 +174,63 @@ public class BattlePanel extends JPanel {
 
         playerNameLabel = new JLabel("Player", SwingConstants.CENTER);
         playerNameLabel.setForeground(Color.WHITE);
-        playerNameLabel.setFont(pixelFont.deriveFont(18f));
+        playerNameLabel.setFont(pixelFont.deriveFont(20f));
         playerNameLabel.setBorder(new EmptyBorder(0, 6, 0, 6));
 
-        playerLevelLabel = new JLabel("Lv: 1", SwingConstants.CENTER);
+        playerLevelLabel = new JLabel("Lv: 1", SwingConstants.LEFT);
+        playerLevelLabel.setBorder(new EmptyBorder(0, 0, 0, 12));
         playerLevelLabel.setForeground(Color.WHITE);
         playerLevelLabel.setFont(pixelFont.deriveFont(16f));
-        playerLevelLabel.setHorizontalAlignment(SwingConstants.LEFT);
 
-        playerHPBar = new HPBar(1, 1); // dummy init; updated in startBattle()
+        playerHPBar = new HPBar(1, 1);
         playerHPBar.setPreferredSize(new Dimension(300, 18));
 
-        playerHPLabel = new JLabel("HP: --", SwingConstants.CENTER);
+        playerHPLabel = new JLabel("HP: --/--", SwingConstants.RIGHT);
+        playerHPLabel.setBorder(new EmptyBorder(0, 12, 0, 6));
         playerHPLabel.setForeground(Color.WHITE);
         playerHPLabel.setFont(pixelFont.deriveFont(16f));
-        playerHPLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
         JPanel playerCenter = new JPanel(new BorderLayout(6, 0));
         playerCenter.setBackground(Color.BLACK);
         playerCenter.add(playerHPBar, BorderLayout.CENTER);
 
-        playerFrame.add(playerNameLabel, BorderLayout.WEST);
-        playerFrame.add(playerCenter, BorderLayout.CENTER);
-
         JPanel playerRight = new JPanel(new BorderLayout());
         playerRight.setBackground(Color.BLACK);
         playerRight.add(playerLevelLabel, BorderLayout.WEST);
         playerRight.add(playerHPLabel, BorderLayout.EAST);
-        playerRight.setBorder(new EmptyBorder(0, 8, 0, 8));
 
+        playerFrame.add(playerNameLabel, BorderLayout.WEST);
+        playerFrame.add(playerCenter, BorderLayout.CENTER);
         playerFrame.add(playerRight, BorderLayout.EAST);
 
         bottomContainer.add(playerFrame, BorderLayout.NORTH);
 
-        //Buttons
-        JPanel bottomButtons = new JPanel();
+        //BTNS
+        JPanel bottomButtons = new JPanel(new GridBagLayout());
         bottomButtons.setBackground(Color.BLACK);
-        bottomButtons.setLayout(new GridBagLayout());
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(18, 18, 0, 18);
-        gbc.gridy = 0;
 
+        Font btnFont = pixelFont.deriveFont(18f);
 
-        Font btnFont = pixelFont.deriveFont(16f);
         skillBtn1 = new JButton("Skill 1");
         skillBtn2 = new JButton("Skill 2");
         skillBtn3 = new JButton("Skill 3");
-        backBtn = new JButton("Back");
 
-        // increase button font size
         styleLargeButton(skillBtn1, btnFont);
         styleLargeButton(skillBtn2, btnFont);
         styleLargeButton(skillBtn3, btnFont);
-        styleLargeButton(backBtn, btnFont);
 
-        //main skills centerd
-        gbc.gridx = 0;
-        bottomButtons.add(skillBtn1, gbc);
-        gbc.gridx = 1;
-        bottomButtons.add(skillBtn2, gbc);
-        gbc.gridx = 2;
-        bottomButtons.add(skillBtn3, gbc);
+        gbc.gridx = 0; bottomButtons.add(skillBtn1, gbc);
+        gbc.gridx = 1; bottomButtons.add(skillBtn2, gbc);
+        gbc.gridx = 2; bottomButtons.add(skillBtn3, gbc);
 
-        //back button in lower right corn
-        JPanel backPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        backPanel.setOpaque(false);
-        backPanel.add(backBtn);
         bottomContainer.add(bottomButtons, BorderLayout.CENTER);
-        bottomContainer.add(backPanel, BorderLayout.SOUTH);
 
+        add(topContainer, BorderLayout.NORTH);
+        add(logScroll, BorderLayout.CENTER);
         add(bottomContainer, BorderLayout.SOUTH);
-        
-        //Back btn behavior
-        backBtn.addActionListener(e -> {
-        int confirm = JOptionPane.showConfirmDialog(
-            this,
-            "Are you sure you want to return to the Main Menu?",
-            "Confirm Return",
-            JOptionPane.YES_NO_OPTION
-            );
-            if (confirm == JOptionPane.YES_OPTION) {
-                parent.showMenu();
-            }
-        });
-        backBtn.setEnabled(false);
     }
     
     //Helper funcs for icon styling
@@ -276,9 +272,9 @@ public class BattlePanel extends JPanel {
         playerNameLabel.setText(player.getName());
         enemyNameLabel.setText(enemy.getName());
 
-        playerHPBar = new HPBar(player.getCurrentHealth(), player.getMaxHealth());
-        enemyHPBar = new HPBar(enemy.getCurrentHealth(), enemy.getMaxHealth());
-        updateHPLabels(); 
+        playerHPBar.updateHP(player.getCurrentHealth(), player.getMaxHealth()); 
+        enemyHPBar.updateHP(enemy.getCurrentHealth(), enemy.getMaxHealth());
+        updateHPLabels();
         //=============================================
 
 
@@ -287,6 +283,10 @@ public class BattlePanel extends JPanel {
         skillBtn1.setText(skills[0].getName());
         skillBtn2.setText(skills[1].getName());
         skillBtn3.setText(skills[2].getName());
+
+        skillBtn1.setEnabled(true);
+        skillBtn2.setEnabled(true);
+        skillBtn3.setEnabled(true);
 
         clearListeners();
 
@@ -529,6 +529,7 @@ public class BattlePanel extends JPanel {
                 enemy = new Cultist();
                 clearBattleLog();
                 enemyNameLabel.setText(enemy.getName());
+                enemyHPBar.updateHP(enemy.getCurrentHealth(), enemy.getMaxHealth());
                 log("🔥 A new foe approaches: " + enemy.getName() + "!");
                 updateHPLabels();
                 enableSkillButtons();
@@ -557,12 +558,12 @@ public class BattlePanel extends JPanel {
                 player.levelUp(0.10, 0.10);
                 healBetweenBattles();
                 enemyNameLabel.setText(enemy.getName());
+                enemyHPBar.updateHP(enemy.getCurrentHealth(), enemy.getMaxHealth());
                 log("You recall the expeprience form your fight with tutorial and use it to grow stronger! 💪");
                 log("⚔️ A new foe approaches: " + enemy.getName() + "!");
                 updateHPLabels();
                 enableSkillButtons();
                 playerTurn = true;
-                enableBackButtonForRealDeal();
                 return;
             }
         }
@@ -581,6 +582,7 @@ public class BattlePanel extends JPanel {
                 player.levelUp(0.15, 0.15);
                 healBetweenBattles();
                 enemyNameLabel.setText(enemy.getName());
+                enemyHPBar.updateHP(enemy.getCurrentHealth(), enemy.getMaxHealth());
                 log("You leveled up!💪");
                 log("⚡ A new foe approaches: " + enemy.getName() + "!");
                 updateHPLabels();
@@ -601,6 +603,7 @@ public class BattlePanel extends JPanel {
                 clearBattleLog();
                 healBetweenBattles();
                 enemyNameLabel.setText(enemy.getName());
+                enemyHPBar.updateHP(enemy.getCurrentHealth(), enemy.getMaxHealth());
                 log("🔥 Realm II: Ignara — molten chaos awaits!");
                 updateHPLabels();
                 enableSkillButtons();
@@ -624,6 +627,7 @@ public class BattlePanel extends JPanel {
                 clearBattleLog();
                 healBetweenBattles();
                 enemyNameLabel.setText(enemy.getName());
+                enemyHPBar.updateHP(enemy.getCurrentHealth(), enemy.getMaxHealth());
                 log("🔥 A new foe approaches: " + enemy.getName() + "!");
                 updateHPLabels();
                 enableSkillButtons();
@@ -666,6 +670,7 @@ public class BattlePanel extends JPanel {
                 player.levelUp(0.20, 0.20);
                 healBetweenBattles();
                 enemyNameLabel.setText(enemy.getName());
+                enemyHPBar.updateHP(enemy.getCurrentHealth(), enemy.getMaxHealth());
                 log("You feel a surge of power course through you! 💪");
                 log("💀 The final boss approaches: " + enemy.getName() + "!");
                 updateHPLabels();
@@ -688,30 +693,7 @@ public class BattlePanel extends JPanel {
     });
     nextBattleTimer.setRepeats(false);
     nextBattleTimer.start();
-}
-
-
-    private void enableBackButtonForRealDeal() {
-    backBtn.setEnabled(true);
-    for (ActionListener al : backBtn.getActionListeners()) backBtn.removeActionListener(al);
-
-    backBtn.addActionListener(e -> {
-        int confirm = JOptionPane.showConfirmDialog(this,
-            "Return to Main Menu? Your current progress will be lost.",
-            "Confirm Exit",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            // 🔁 Change this depending on your main game structure
-            // Example if using a card layout in GameFrame:
-            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-            if (topFrame instanceof GameFrame) {
-                ((GameFrame) topFrame).showMenu();
-            }
-        }
-    });
-}
+    }
 
     private void healBetweenBattles() {
         int healAmount = player.getMaxHealth(); // changed from 60 to player.getMaxHealth()
@@ -721,23 +703,22 @@ public class BattlePanel extends JPanel {
     }
 
     private void updateHPLabels() {
-        playerHPLabel.setText("HP: " + player.getCurrentHealth() + "/" + player.getMaxHealth());
-        enemyHPLabel.setText("HP: " + enemy.getCurrentHealth() + "/" + enemy.getMaxHealth());
-        updateLevelLabel(); // ensure level label stays current
-    }
 
-    private void updateLevelLabel() {
-        if (player == null) {
-            playerLevelLabel.setText("Level: --");
-            return;
+        if(player != null) {
+            playerHPLabel.setText("HP: " + player.getCurrentHealth() + "/" + player.getMaxHealth());
+            playerHPBar.updateHP(player.getCurrentHealth(), player.getMaxHealth());
+            playerLevelLabel.setText("Lv: " + player.getLevel());
+        } else {
+            playerHPLabel.setText("HP: --/--");
+            playerLevelLabel.setText("LV: --/--");
         }
-        try {
-            playerLevelLabel.setText("Level: " + player.getLevel());
-        } catch (Exception ex) {
-            // safe fallback if something goes wrong retrieving level
-            playerLevelLabel.setText("Level: --");
-            System.err.println("Warning: couldn't read player level: " + ex.getMessage());
-        }
+
+        if (enemy != null) {
+            enemyHPLabel.setText("HP: " + enemy.getCurrentHealth() + "/" + enemy.getMaxHealth());
+            enemyHPBar.updateHP(enemy.getCurrentHealth(), enemy.getMaxHealth());
+        } else {
+            enemyHPLabel.setText("HP: --/--");
+        }     
     }
 
     private void log(String msg) {
@@ -758,5 +739,196 @@ public class BattlePanel extends JPanel {
 
     public JButton getBackButton() {
         return backButton;
+    }
+
+    private void createExitOverlay() {
+
+        exitOverlay = new JPanel();
+        exitOverlay.setLayout(null);
+        exitOverlay.setBackground(new Color(0, 0, 0, 180)); // dark semi-transparent
+        exitOverlay.setVisible(false);
+
+        // container
+        JPanel box = new JPanel(null);
+        box.setBackground(Color.BLACK);
+        box.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+        box.setBounds(0, 0, 320, 180);
+
+        box.setName("exitWindow");
+        exitOverlay.add(box);
+
+        JLabel prompt = new JLabel("Exit to Main Menu?", SwingConstants.CENTER);
+        prompt.setForeground(Color.WHITE);
+        prompt.setFont(pixelFont.deriveFont(20f));
+        prompt.setBounds(10, 20, 300, 30);
+        box.add(prompt);
+
+        JButton yes = new JButton("Yes");
+        yes.setFont(pixelFont.deriveFont(18f));
+        yes.setFocusable(false);
+        yes.setForeground(Color.WHITE);
+        yes.setBackground(Color.BLACK);
+        yes.setBounds(40, 90, 100, 40);
+        box.add(yes);
+
+        JButton no = new JButton("No");
+        no.setFont(pixelFont.deriveFont(18f));
+        no.setFocusable(false);
+        no.setForeground(Color.WHITE);
+        no.setBackground(Color.BLACK);
+        no.setBounds(180, 90, 100, 40);
+        box.add(no);
+
+        yes.addActionListener(e -> {
+            exitOverlay.setVisible(false);
+            if(glass != null) glass.setVisible(false);
+
+            JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            if(frame instanceof GameFrame) {
+                ((GameFrame) frame).showMenu();
+            }
+        });
+
+        no.addActionListener(e -> {
+            exitOverlay.setVisible(false);
+            if (glass != null) glass.setVisible(false);
+        });
+    }
+
+    
+
+
+    private void showExitOverlay() {
+        if (glass != null) {
+            glass.setVisible(true);
+        }
+
+        exitOverlay.setBounds(0, 0, getWidth(), getHeight());
+        exitOverlay.setVisible(true);
+
+        Component popup = null;
+        for( Component c : exitOverlay.getComponents()) {
+            if ("exitWindow".equals(c.getName())) {
+                popup = c;
+                break;
+            }
+        }
+
+        if(popup != null) {
+            int px = (exitOverlay.getWidth() - popup.getWidth()) / 2;
+            int py = (exitOverlay.getHeight() - popup.getHeight()) / 2;
+            popup.setLocation(Math.max(0, px), Math.max(0, py));
+        
+
+            if(glass != null) {
+                glass.revalidate();
+                glass.repaint();
+            }
+        }
+    }
+
+
+    @Override
+    public void doLayout() {
+        super.doLayout();
+
+        if (exitOverlay != null) {
+            exitOverlay.setBounds(0, 0, getWidth(), getHeight());
+
+            Component popup = null;
+            for (Component c : exitOverlay.getComponents()) {
+                if ("exitWindow".equals(c.getName())) {
+                    popup = c;
+                    break;
+                }
+            }
+
+            if (popup != null) {
+                popup.setLocation(
+                    (exitOverlay.getWidth() - popup.getWidth()) / 2,
+                    (exitOverlay.getHeight() - popup.getHeight()) / 2
+                );
+            }
+        }
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+
+        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        if (frame != null && glass == null) {
+            glass = (JPanel) frame.getGlassPane();
+            glass.setLayout(null);
+            glass.setOpaque(false);
+
+            createExitOverlay();
+
+            // absorb all mouse events (so battle UI becomes unclickable)
+            glass.addMouseListener(new MouseAdapter() {});
+            glass.addMouseMotionListener(new MouseMotionAdapter() {});
+            
+            if(glass != null && exitOverlay != null && exitOverlay.getParent() != glass){
+                glass.add(exitOverlay);
+                exitOverlay.setBounds(0, 0, getWidth(), getHeight());
+                glass.revalidate();
+                glass.repaint();
+            }
+        }
+    }
+
+    class WhiteScrollBarUI extends BasicScrollBarUI {
+
+        @Override
+        protected void configureScrollBarColors() {
+            thumbColor = Color.WHITE;
+            trackColor = Color.BLACK;
+        }
+
+        @Override
+        protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // Black background
+            g2.setColor(Color.BLACK);
+            g2.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
+
+            // White outline
+            g2.setColor(Color.WHITE);
+            g2.drawRect(trackBounds.x, trackBounds.y, trackBounds.width - 1, trackBounds.height - 1);
+
+            g2.dispose();
+        }
+
+        @Override
+        protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+            if (!scrollbar.isEnabled() || thumbBounds.width > thumbBounds.height) return;
+
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2.setColor(Color.WHITE);
+            g2.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, 10, 10);
+
+            g2.dispose();
+        }
+
+        // REMOVE ARROWS
+        @Override
+        protected JButton createDecreaseButton(int orientation) { return createZeroButton(); }
+        @Override
+        protected JButton createIncreaseButton(int orientation) { return createZeroButton(); }
+
+        private JButton createZeroButton() {
+            JButton btn = new JButton();
+            btn.setPreferredSize(new Dimension(0, 0));
+            btn.setMinimumSize(new Dimension(0, 0));
+            btn.setMaximumSize(new Dimension(0, 0));
+            btn.setBorder(null);
+            btn.setFocusable(false);
+            btn.setOpaque(false);
+            return btn;
+        }
     }
 }

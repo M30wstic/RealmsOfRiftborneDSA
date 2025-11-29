@@ -8,7 +8,7 @@ public class Entity {
     protected int def;
     protected Skill[] skills;
     protected int currentCooldown;
-    private int level = 0;
+    private int level = 1;
 
     public Entity(String name, int maxHealth, int currHealth, int atk, int def) {
         this.name = name;

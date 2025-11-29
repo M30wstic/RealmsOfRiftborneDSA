@@ -18,11 +18,9 @@ public class GamePanel extends JPanel {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         
-        // Clear background
         g2.setColor(Color.BLACK);
         g2.fillRect(0, 0, getWidth(), getHeight());
         
-        // Calculate scaling to fit in the available space
         int screenW = getWidth();
         int screenH = getHeight();
 
@@ -31,7 +29,6 @@ public class GamePanel extends JPanel {
 
         double scale = Math.min(scaleX, scaleY);
 
-        // Center the scaled content
         int scaledWidth = (int) (WIDTH * scale);
         int scaledHeight = (int) (HEIGHT * scale);
         int x = (screenW - scaledWidth) / 2;
@@ -40,7 +37,6 @@ public class GamePanel extends JPanel {
         g2.translate(x, y);
         g2.scale(scale, scale);
         
-        // Enable anti-aliasing
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
 }

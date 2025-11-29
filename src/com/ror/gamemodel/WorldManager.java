@@ -1,6 +1,8 @@
 package com.ror.gamemodel;
 
-import java.util.*;
+import com.ror.gameutil.Queue;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 public class WorldManager {
     private final LinkedHashMap<String, Queue<Entity>> worlds = new LinkedHashMap<>();
@@ -22,25 +24,25 @@ public class WorldManager {
 
     private void loadWorlds() {
         // 🌬️ Aetheria
-        Queue<Entity> aetheria = new LinkedList<>();
-        aetheria.add(new SkySerpent());
-        aetheria.add(new SkySerpent());
-        aetheria.add(new GeneralZephra());
+        Queue<Entity> aetheria = new Queue<>();
+        aetheria.enqueue(new SkySerpent());
+        aetheria.enqueue(new SkySerpent());
+        aetheria.enqueue(new GeneralZephra());
         worlds.put("Aetheria", aetheria);
 
         // 🔥 Ignara
-        Queue<Entity> ignara = new LinkedList<>();
-        ignara.add(new MoltenImp());
-        ignara.add(new MoltenImp());
-        ignara.add(new GeneralVulkrag());
+        Queue<Entity> ignara = new Queue<>();
+        ignara.enqueue(new MoltenImp());
+        ignara.enqueue(new MoltenImp());
+        ignara.enqueue(new GeneralVulkrag());
         worlds.put("Ignara", ignara);
 
         // 🌑 Noxterra
-        Queue<Entity> noxterra = new LinkedList<>();
-        noxterra.add(new ShadowCreeper());
-        noxterra.add(new ShadowCreeper());
-        noxterra.add(new ShadowWarlord()); // corrected name
-        worlds.put("Noxtperra", noxterra);
+        Queue<Entity> noxterra = new Queue<>();
+        noxterra.enqueue(new ShadowCreeper());
+        noxterra.enqueue(new ShadowCreeper());
+        noxterra.enqueue(new ShadowWarlord()); // corrected name
+        worlds.put("Noxterra", noxterra);
     }
 
     public Entity getNextEnemy() {
@@ -50,7 +52,7 @@ public class WorldManager {
 
         // If the current world still has enemies
         if (enemies != null && !enemies.isEmpty()) {
-            return enemies.poll();
+            return enemies.dequeue();
         }
 
         // If current world cleared, move to the next

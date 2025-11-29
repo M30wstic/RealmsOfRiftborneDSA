@@ -15,15 +15,15 @@ public class GameFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        setLayout(new CardLayout());
+        getContentPane().setLayout(new CardLayout());
 
         menuPanel = new MenuPanel(this);
         selectPanel = new CharacterSelectPanel(this);
         battlePanel = new BattlePanel(this);
 
-        add(menuPanel, "Menu");
-        add(selectPanel, "Select");
-        add(battlePanel, "Battle");
+        getContentPane().add(menuPanel, "Menu");
+        getContentPane().add(selectPanel, "Select");
+        getContentPane().add(battlePanel, "Battle");
 
         showMenu();
         setVisible(true);

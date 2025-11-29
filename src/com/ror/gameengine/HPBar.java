@@ -27,7 +27,7 @@ public class HPBar extends JPanel{
 
   public HPBar(int currentHP, int maxHP) {
     this.maxHP = maxHP;
-    this.currentHP = maxHP;
+    this.currentHP = currentHP;
     this.setPreferredSize(new Dimension(200, 22));
     setOpaque(false);
   }
@@ -57,37 +57,41 @@ public class HPBar extends JPanel{
     g2.fillRoundRect(0, 0, width, height, 10, 10);
 
     //Background this
-    g2.setColor(new Color(70, 70, 70));
+    g2.setColor(Color.BLACK);
     g2.fillRoundRect(2, 2, width - 4, height - 4, 8, 8);
 
     //HP color
-    if(hpPercent > 0.6) {
-      g2.setColor(new Color(0, 200, 0));
-    } else if(hpPercent > 0.3) {
-      g2.setColor(new Color(255, 180, 0));
-    } else {
-      g2.setColor(new Color(220, 0, 0));
-    }
+    // if(hpPercent > 0.6) {
+    //   g2.setColor(new Color(0, 200, 0));
+    // } else if(hpPercent > 0.3) {
+    //   g2.setColor(new Color(255, 180, 0));
+    // } else {
+    //   g2.setColor(new Color(220, 0, 0));
+    // }
 
+    g2.setColor(Color.WHITE);
     g2.fillRoundRect(2, 2, filledWidth, height - 4, 8, 8);
 
     //highlight
-    g2.setColor(new Color(255, 255, 255, 80));
+    // g2.setColor(new Color(255, 255, 255, 80));
+    g2.setColor(Color.WHITE);
     g2.fillRoundRect(2, 2, filledWidth, (height - 4) / 2, 8, 8);
 
     //Outline
     g2.setColor(Color.WHITE);
     g2.drawRoundRect(0, 0, width - 1, height - 1, 10, 10);
 
-    //Text overlay
-    String hpText = currentHP + " / " + maxHP;
-    g2.setColor(Color.WHITE);
-    g2.setFont(pixelFont.deriveFont(16f));
+    //Optional ni for text overlay in HP bar
+    //In case you wanna transfer HP string inside it
 
-    FontMetrics fm = g2.getFontMetrics();
-    int textX = (width - fm.stringWidth(hpText)) / 2;
-    int textY = (height + fm.getAscent()) / 2 - 2;
+    // String hpText = "HP" + currentHP + " / " + maxHP;
+    // g2.setColor(Color.WHITE);
+    // g2.setFont(pixelFont.deriveFont(16f));
 
-    g2.drawString(hpText, textX, textY);
+    // FontMetrics fm = g2.getFontMetrics();
+    // int textX = (width - fm.stringWidth(hpText)) / 2;
+    // int textY = (height + fm.getAscent()) / 2 - 2;
+
+    // g2.drawString(hpText, textX, textY);
   }
 }
