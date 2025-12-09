@@ -9,10 +9,9 @@ public class Music {
     private static Clip clip;
 
     public static void playOgg(String path, boolean loop) {
-        stop(); // Stop previous clip
+        stop(); //stop last played
 
         try {
-            // Load OGG from classpath
             InputStream audioSrc = Music.class.getResourceAsStream(path);
             if (audioSrc == null) {
                 System.out.println("OGG not found: " + path);
@@ -21,10 +20,9 @@ public class Music {
 
             BufferedInputStream buffered = new BufferedInputStream(audioSrc);
 
-            // Decode using VorbisSPI
             AudioInputStream ais = AudioSystem.getAudioInputStream(buffered);
 
-            // Convert the OGG stream into playable PCM
+            // Stream to PCM (Still no idea how it works [Pulled from reddit])
             AudioFormat baseFormat = ais.getFormat();
             AudioFormat decodedFormat = new AudioFormat(
                     AudioFormat.Encoding.PCM_SIGNED,
