@@ -1081,12 +1081,12 @@ public class BattlePanel extends JPanel {
     //Effects parts to be transed later
 
     //With how StoryCont() is structed storyText bounces up and down. Until i find a fix this remains commented :(
-    public void startBlinking() {
-        Timer t = new Timer(500, e -> {
-            storyContinue.setVisible(!storyContinue.isVisible());
-        });
-        t.start();
-    }
+    // public void startBlinking() {
+    //     Timer t = new Timer(500, e -> {
+    //         storyContinue.setVisible(!storyContinue.isVisible());
+    //     });
+    //     t.start();
+    // }
 
     //Typewriter eff,  still need minor fixes in storyOverlay so no jumpy effs
     //TODO: Test setPreferredsize() on overlay, u never know ;)
