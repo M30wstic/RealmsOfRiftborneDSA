@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 
 
 public class CharacterSelectPanel extends JPanel {
@@ -51,12 +52,11 @@ public class CharacterSelectPanel extends JPanel {
                 440, 520, e -> parent.showBattle(new com.ror.model.Playable.Tharn()));
 
         JButton back = new JButton();
-        back.setBounds(1180, 35, 60, 60);
+        back.setBounds(1180, 35, 30, 30);
         back.setContentAreaFilled(false);
-        back.setBorder(null);
+        back.setBorder(new LineBorder(Color.WHITE, 2));
         back.setFocusPainted(false);
         back.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        //setIcon
         back.addActionListener(e -> parent.showMenu());
         add(back);
 
