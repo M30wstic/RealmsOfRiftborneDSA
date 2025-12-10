@@ -90,7 +90,7 @@ public class MenuPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // draw background (keeps aspect ratio)
+        // background setup
         if (backgroundImage != null) {
             int imgW = backgroundImage.getWidth(null);
             int imgH = backgroundImage.getHeight(null);
@@ -110,17 +110,16 @@ public class MenuPanel extends JPanel {
             g.drawImage(backgroundImage, x, y, drawW, drawH, this);
         }
 
-        // draw cinematic bars
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setColor(Color.WHITE);
         g2.setStroke(new BasicStroke(2f));
 
         // TOP BAR
-        int topBarHeight = 70;  // matches your screenshot
+        int topBarHeight = 70;
         int topY = topBarHeight;
         g2.drawLine(0, topY, getWidth(), topY);
 
-        // BOTTOM CINEMATIC BAR — ONLY top border
+        // BOTTOM BAR
         int bottomBarHeight = 70;
         int bottomY = getHeight() - bottomBarHeight;
         g2.drawLine(0, bottomY, getWidth(), bottomY);

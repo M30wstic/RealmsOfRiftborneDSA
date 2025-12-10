@@ -41,7 +41,7 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
             g2.dispose();
         }
 
-        // Remove arrows
+        // Remove scrollbar arrows
         @Override
         protected JButton createDecreaseButton(int orientation) { return createZeroButton(); }
         @Override
