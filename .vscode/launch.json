@@ -5,21 +5,28 @@
             "type": "java",
             "name": "RealmsOfRiftborne",
             "request": "launch",
-            "mainClass": "com.ror.gameengine.RealmsOfRiftborne",
+            "mainClass": "com.ror.engine.RealmsOfRiftborne",
+            "projectName": "Cemanes_RealmsOfRiftborneDSA_b794831c"
+        },
+        {
+            "type": "java",
+            "name": "RealmsOfRiftborne",
+            "request": "launch",
+            "mainClass": "com.ror.engine.RealmsOfRiftborne",
             "projectName": "JavaGameOOP_e0ff182f"
         },
         {
             "type": "java",
             "name": "RealmsOfRiftborne",
             "request": "launch",
-            "mainClass": "com.ror.gameengine.RealmsOfRiftborne",
+            "mainClass": "com.ror.engine.RealmsOfRiftborne",
             "projectName": "JavaGameOOP_a5934f53"
         },
         {
             "type": "java",
             "name": "RealmsOfRiftborne",
             "request": "launch",
-            "mainClass": "com.ror.gameengine.RealmsOfRiftborne",
+            "mainClass": "com.ror.engine.RealmsOfRiftborne",
             "projectName": "JavaGameOOP_4a8c2692"
         },
         {
@@ -32,8 +39,8 @@
             "vmArgs": "",
             "args": "",
             "classPaths": [
-                "${workspaceFolder}/com/ror/gamemodel",
-                "${workspaceFolder}/com/ror/gameengine",
+                "${workspaceFolder}/com/ror/model",
+                "${workspaceFolder}/com/ror/engine",
                 "${workspaceFolder}"
             ]
         }
