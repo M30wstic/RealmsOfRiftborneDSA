@@ -34,19 +34,19 @@ public class CharacterSelectPanel extends JPanel {
         add(title);
 
         addCharacterBox("Andrew ( Time Blade )", "/com/ror/model/Assets/Images/Andrew3.png",
-                140, 160, e -> parent.showBattle(new com.ror.model.Playable.Andrew()));
+                140, 160, e -> parent.showBattle(new com.ror.model.PlayableCharacters.TimeBlade()));
 
         addCharacterBox("Flashey ( Sky Mage )", "/com/ror/model/Assets/Images/Flashley.png",
-                740, 160, e -> parent.showBattle(new com.ror.model.Playable.SkyMage()));
+                740, 160, e -> parent.showBattle(new com.ror.model.PlayableCharacters.SkyMage()));
 
         addCharacterBox("Drax ( Flame Warrior )", "/com/ror/model/Assets/Images/Drax.png",
-                140, 340, e -> parent.showBattle(new com.ror.model.Playable.FlameWarrior()));
+                140, 340, e -> parent.showBattle(new com.ror.model.PlayableCharacters.FlameWarrior()));
 
         addCharacterBox("Nyx ( Assassin )", "/com/ror/model/Assets/Images/Nyx.png",
-                740, 340, e -> parent.showBattle(new com.ror.model.Playable.Nyx()));
+                740, 340, e -> parent.showBattle(new com.ror.model.PlayableCharacters.ShadowAssassin()));
 
         addCharacterBox("Tharn ( Stone Golem )", "/com/ror/model/Assets/Images/Tharn.png",
-                440, 520, e -> parent.showBattle(new com.ror.model.Playable.Tharn()));
+                440, 520, e -> parent.showBattle(new com.ror.model.PlayableCharacters.StoneGolem()));
 
         JButton back = new JButton();
         back.setBounds(1180, 35, 30, 30);

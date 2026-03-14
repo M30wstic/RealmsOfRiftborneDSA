@@ -1,71 +1,102 @@
 package com.ror.model;
 
-public class Entity {
-    protected String name;
-    protected int maxHealth;
-    protected int currHealth;
-    protected int atk;
-    protected int def;
-    protected Skill[] skills;
-    protected int currentCooldown;
+public abstract class Entity {
+    private String name;
+    private int maxHealth;
+    private int currHealth;
+    private int attack;
+    private int defense;
+    private int maxMana;
+    private int currentMana;
+    private int speed;
+    private int currentCooldown;
     private int level = 1;
-
-    public Entity(String name, int maxHealth, int currHealth, int atk, int def) {
+    private Skill[] skills;
+    
+    //CONSTRUCTOR
+    public Entity(String name, int maxHealth, int currHealth, int attack, int defense, int maxMana, int currMana, int speed, int currentCooldown) {
         this.name = name;
         this.maxHealth = maxHealth;
         this.currHealth = currHealth;
-        this.atk = atk;
-        this.def = def;
+        this.attack = attack;
+        this.defense = defense;
+        this.maxMana = maxMana;
+        this.currentMana = currMana;
+        this.speed = speed;
+        this.currentCooldown = currentCooldown;
         this.skills = new Skill[3];
     }
 
-    public String getName() {
-        return name;
-    }
+    //GETTERS AND SETTERS
+    //GETTERS
+    public String getName() { return name; }
 
-    public int getMaxHealth() {
-        return maxHealth;
-    }
+    public int getMaxHealth() { return maxHealth; }
 
-    public int getCurrentHealth() {
-        return currHealth;
-    }
+    public int getCurrentHealth() { return currHealth; }
 
-    public int getAtk() {
-        return atk;
-    }
+    public int getAttack() { return attack; }
 
-    public int getDef() {
-        return def;
-    }
+    public int getDefense() { return defense; }
 
+    public int getMaxMana() { return maxMana; }
+
+    public int getCurrentMana() { return currentMana; }
+
+    public int getSpeed() { return speed; }
+
+    public int getCurrentCooldown() { return currentCooldown; }
+
+    public int getLevel() { return level; }
+
+    public Skill[] getSkills() { return skills; }
+
+    ///SETTERS
     public void setCurrentHealth(int health) {
         this.currHealth = Math.max(0, Math.min(health, maxHealth));
+    }
+
+    public void setCurrentMana(int mana) {
+        this.currentMana = Math.max(0, Math.min(mana, maxMana));
     }
 
     public void setCurrentCooldown(int cooldown) {
         this.currentCooldown = cooldown;
     }
 
-    public Skill[] getSkills() {
-        return skills;
+    public void setSkills(Skill[] skills) {
+        this.skills = skills;
     }
+    ///GETTER AND SETTER END
+    
 
+
+    ///STANDARD LOGIC STARTS HERE
     public void takeDamage(int dmg) {
-        int actualDamage = Math.max(0, dmg - def);
-        currHealth -= actualDamage;
-        if (currHealth < 0)
-            currHealth = 0;
-        System.out.println(name + " took " + actualDamage + " damage! " + name + " has " + currHealth + " HP left.");
+        int actualDamage = Math.max(1, dmg - defense); //deal at least 1 damage
+        this.currHealth = Math.max(0, this.currHealth - actualDamage);
+        System.out.printf("%s took %d damage! (%d/%d HP left)%n", name, actualDamage, currHealth, maxHealth);
     }
 
     public void attack(Entity target) {
-        System.out.println(name + " attacks " + target.getName() + " for " + atk + " damage!");
-        target.takeDamage(atk);
+        System.out.printf("%s attacks %s for %d damage!%n", this.name, target.getName(), this.attack);
+        target.takeDamage(this.attack);
+    }
+
+    public void useMana(int manaCost) {
+        if (currentMana >= manaCost) {
+            this.currentMana -= manaCost;
+        } else {
+            throw new IllegalStateException("Not enough mana!");
+        }
+    }
+    
+    public void restoreMana(int manaRestoreAmount) {
+        this.currentMana = Math.min(maxMana, this.currentMana + manaRestoreAmount);
     }
 
     public boolean isAlive() {
-        return currHealth > 0;
+        return this.currHealth > 0;
     }
 
     public void setSkill(int slot, Skill skill) {
@@ -77,49 +108,44 @@ public class Entity {
     }
 
     public void useSkill(int slot, Entity target) {
-        if (slot >= 0 && slot < skills.length && skills[slot] != null) {
-            Skill skill = skills[slot];
-            System.out.println(name + " uses " + skill.getName() + " on " + target.getName() + "!");
-            skill.use(this, target);
-        } else {
-            System.out.println("Invalid skill slot or no skill equipped!");
+            if (slot >= 0 && slot < skills.length && skills[slot] != null) {
+                Skill skill = skills[slot];
+                if (currentMana >= skill.getManaCost()) {
+                    System.out.printf("%s uses %s on %s!%n", name, skill.getName(), target.getName());
+                    useMana(skill.getManaCost());
+                    skill.use(this, target);
+                } else {
+                    System.out.println(name + " doesn't have enough mana for " + skill.getName() + "!");
+                }
+            } else {
+                System.out.println("No skill equipped in that slot!");
+            }
         }
-    }
 
     public Skill getSkillByName(String name) {
         for (Skill skill : skills) {
-            if (skill.getName().equalsIgnoreCase(name)) {
+            if (skill != null &&skill.getName().equalsIgnoreCase(name)) {
                 return skill;
             }
         }
-        return null;
-    }
-
-    public void setSkills(Skill[] skills) {
-        this.skills = skills;
+    return null;
     }
 
     public void levelUp(double hpPercent, double atkPercent) {
         int hpIncrease = (int) Math.round(maxHealth * hpPercent);
-        int atkIncrease = (int) Math.round(atk * atkPercent);
+        int atkIncrease = (int) Math.round(attack * atkPercent);
 
         maxHealth += hpIncrease;
-        currHealth += hpIncrease;
-        atk += atkIncrease;
-
-        // Reset all skill cooldowns
+        currHealth = maxHealth; // Fully heal on level up
+        attack += atkIncrease;
+        
         if (skills != null) {
             for (Skill skill : skills) {
-                if (skill != null)
-                    skill.resetCooldown(); // reset to 0
+                if (skill != null) skill.resetCooldown();
             }
         }
         level++;
-        System.out.println(name + " leveled up! Max HP +" + hpIncrease + ", ATK +" + atkIncrease);
-        System.out.println("All skill cooldowns have been reset!");
+        System.out.printf("%s leveled up! Max HP +%d, ATK +%d%n", name, hpIncrease, atkIncrease);
     }
 
-    public int getLevel() {
-        return level;
-    }
 }

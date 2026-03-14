@@ -1,48 +1,36 @@
-//BattleEngine is mainly responsible for managing the battle logic, turn order, and interactions between the player and enemy entities. It communicates with the BattlePanel through a Listener interface to update the UI based on game events. The engine handles skill usage, enemy actions, status effects, and progression through different realms and bosses in the game.
+//BattleEngine is mainly responsible for managing the battle logic, turn order, and interactions between the player 
+// and enemy entities. It communicates with the BattlePanel through a Listener interface to update the UI based on game events. 
+// The engine handles skill usage, enemy actions, status effects, and progression through different realms and bosses in the game.
+
 package com.ror.engine;
 
 import com.ror.model.*;
+import com.ror.model.Enemies.*;
 
 public class BattleEngine {
 
-    // Dont move, or else mo taas ang code sa tanan mo access ani
     public interface Listener {
         void onLog(String message);
-
         void onUpdateHP(Entity player, Entity enemy);
-
         void onUpdateSkillButtons(Skill[] skills);
-
         void onShowStory(String text);
-
         void onShowTutorial(String text);
-
         void onClearBattleLog();
-
         void onSetBackground(String path);
-
         void onPlayMusic(String path, boolean loop);
-
         void onStopMusic();
-
         void onPlaySoundThen(String soundPath, Runnable nextAction);
-
         void onEnableSkillButtons(boolean enabled);
-
         void onPlayerTurnPrompt();
-
         void onGameOver();
-
         void onGameWin();
     }
 
     private Listener listener;
-
     private Entity player;
     private Entity enemy;
 
     private boolean playerTurn = true;
-
     private boolean playerDodgeActive = false;
     private boolean enemyBlinded = false;
     private int burnDamageToEnemy = 0;
@@ -55,21 +43,15 @@ public class BattleEngine {
         this.listener = listener;
     }
 
-    public boolean isPlayerTurn() {
-        return playerTurn;
-    }
+    //GETTERS
+    public boolean isPlayerTurn() { return playerTurn; }
+    public Entity getPlayer() { return player; }
+    public Entity getEnemy() { return enemy; }
 
-    public Entity getPlayer() {
-        return player;
-    }
-
-    public Entity getEnemy() {
-        return enemy;
-    }
 
     public void startBattle(Entity chosenPlayer) {
         this.player = chosenPlayer;
-        this.enemy = new Goblin();
+        this.enemy = new Goblin(); // Initiate tutorial enemy
 
         playerTurn = true;
         playerDodgeActive = false;
@@ -83,314 +65,170 @@ public class BattleEngine {
         listener.onSetBackground("/com/ror/model/Assets/Backgrounds/Tutorial.png");
         listener.onClearBattleLog();
 
-        listener.onLog("- The Battle Begins. It's " + player.getName() + " VS " + enemy.getName() + "!");
+        listener.onLog("- The Battle Begins! " + player.getName() + " VS " + enemy.getName());
         listener.onUpdateHP(player, enemy);
 
+        //Upon Starting Battle, all CDs reset
         for (Skill sk : player.getSkills()) {
-            sk.resetCooldown();
+            if (sk != null) sk.resetCooldown();
         }
 
         listener.onUpdateSkillButtons(player.getSkills());
-        listener.onShowTutorial(
-                " WELCOME TO REALMS OF RIFTBORNE! \n\n" +
-                        "I see you have selected " + player.getName() + ". Here's a little let-you-know:\n\n" +
-                        "[!] You are pitted against a succession of enemies. Defeat each one of them to get through the levels.\n\n"
-                        +
-                        "[!] Defeating a miniboss will allow you to proceed to the next realm.\n\n" +
-                        "[!] You restore all health after every battle.\n\n" +
-                        "[!] Your skills are your main method of attack, and certain skills will go on cooldown for a set amount of turns.\n\n"
-                        +
-                        "[!] The Back button on the bottom right is disabled until AFTER the Tutorial!\n\n" +
-                        "Pick a skill to begin your turn!");
-
-        listener.onLog("\n- Choose a skill to begin your turn.");
+        listener.onShowTutorial("WELCOME TO REALMS OF RIFTBORNE!\n\nPick a skill to begin!");
         listener.onPlayerTurnPrompt();
         listener.onEnableSkillButtons(true);
     }
-
+    
+    //DYNAMIC SKILL LOGIC POG
     public boolean playerUseSkill(int index) {
-        if (!playerTurn || player == null || enemy == null) {
-            return false;
-        }
+        if (!playerTurn || player == null || enemy == null) return false;
 
         Skill s = player.getSkills()[index];
+        if (s == null) return false;
 
         if (s.isOnCooldown()) {
-            listener.onLog("- " + s.getName() + " is on cooldown for " + s.getCurrentCooldown() + " more turns!");
+            listener.onLog("- " + s.getName() + " is on cooldown for " + s.getCurrentCooldown() + " turns!");
             return false;
         }
 
         listener.onLog("- " + player.getName() + " uses " + s.getName() + "!");
 
-        switch (s.getType().toLowerCase()) {
-            case "chrono":
-                int immediate = s.getPower() + player.getAtk();
-                enemy.takeDamage(immediate);
-                burnDamageToEnemy = Math.max(1, s.getPower() / 3);
+        String skillType = s.getType().toLowerCase();
+        
+        if (skillType.equals("chrono") || skillType.equals("attack")) {
+            int damage = (int)(player.getAttack() * s.getDamageMultiplier());
+            enemy.takeDamage(damage);
+            
+            if (skillType.equals("chrono")) {
+                burnDamageToEnemy = Math.max(2, damage / 4);
                 burnTurnsRemaining = 3;
-                listener.onLog("- Timeblade strikes for " + immediate + " damage and applies a burn ("
-                        + burnDamageToEnemy + " x " + burnTurnsRemaining + " turns)!");
-                break;
-            case "shield":
-                playerShieldTurns = 2;
-                listener.onLog("- Time Shield bends time around you! Incoming damage reduced by 50% for 2 turns!");
-                break;
-            case "dodge":
-                playerDodgeActive = true;
-                listener.onLog("- WindWalk activated! You'll evade the next attack completely!");
-                break;
-            case "reverse":
-                int lost = player.getMaxHealth() - player.getCurrentHealth();
-                int heal = (int) Math.ceil(lost * 0.5);
-                if (heal <= 0) {
-                    listener.onLog("- Reverse Flow restores 0 HP (you are already at full health).");
-                } else {
-                    player.setCurrentHealth(Math.min(player.getMaxHealth(), player.getCurrentHealth() + heal));
-                    listener.onLog("- Reverse Flow restores " + heal + " HP (50% of lost HP)!");
-                }
-                break;
-            case "heal":
-                int lostHP = player.getMaxHealth() - player.getCurrentHealth();
-                int healAmount = (int) Math.ceil(lostHP * 0.4);
-                if (healAmount <= 0) {
-                    listener.onLog("- " + s.getName() + " — you are already at full health!");
-                } else {
-                    player.setCurrentHealth(Math.min(player.getMaxHealth(), player.getCurrentHealth() + healAmount));
-                    listener.onLog("- " + s.getName() + " restores " + healAmount + " HP (40% of lost HP)!");
-                }
-                break;
-            case "blind":
-                enemyBlinded = true;
-                listener.onLog(
-                        "- " + s.getName() + " — " + enemy.getName() + " is blinded and will miss the next attack!");
-                break;
-            default:
-                enemy.takeDamage(s.getPower() + player.getAtk());
-                listener.onLog("- " + enemy.getName() + " takes " + (s.getPower() + player.getAtk()) + " damage!");
-                break;
+                listener.onLog("- Chrono-burn applied to " + enemy.getName() + "!");
+            }
+        } 
+        else if (skillType.equals("shield")) {
+            playerShieldTurns = 2;
+            listener.onLog("- Time Shield active! Damage reduced by 50%.");
+        } 
+        else if (skillType.equals("dodge")) {
+            playerDodgeActive = true;
+            listener.onLog("- Windwalk active! Next attack will be dodged.");
+        } 
+        else if (skillType.equals("heal") || skillType.equals("reverse")) {
+            int lostHP = player.getMaxHealth() - player.getCurrentHealth();
+            int healAmount = (int)(lostHP * 0.5); 
+            player.setCurrentHealth(player.getCurrentHealth() + healAmount);
+            listener.onLog("- Restored " + healAmount + " HP!");
         }
 
-        if (s.getCooldown() > 0) {
-            s.triggerCooldown();
-        }
+        s.triggerCooldown();
 
+        //reduce cooldowns of other skills by 1 turn after using a skill
         for (Skill skill : player.getSkills()) {
-            if (skill != s) {
+            if (skill != null && skill != s) {
                 skill.reduceCooldown();
             }
         }
 
         listener.onUpdateSkillButtons(player.getSkills());
         listener.onUpdateHP(player, enemy);
-
         playerTurn = false;
         return true;
+
     }
 
     public void enemyTurn() {
-        if (enemy == null || player == null) {
+        if (enemy == null || player == null || !enemy.isAlive()) {
+            if (enemy != null && !enemy.isAlive()) handleEnemyDefeat();
             return;
         }
 
-        if (!enemy.isAlive()) {
-            handleEnemyDefeat();
-            return;
-        }
-
-        if (burnTurnsRemaining > 0 && enemy.isAlive()) {
+        // Apply Burn effects firstly
+        if (burnTurnsRemaining > 0) {
             enemy.takeDamage(burnDamageToEnemy);
             burnTurnsRemaining--;
-            listener.onLog("- Burn deals " + burnDamageToEnemy + " damage to " + enemy.getName() + " ("
-                    + burnTurnsRemaining + " turns remaining).");
-            listener.onUpdateHP(player, enemy);
+            listener.onLog("- Burn deals " + burnDamageToEnemy + " to " + enemy.getName());
             if (!enemy.isAlive()) {
                 handleEnemyDefeat();
                 return;
             }
         }
 
-        if (enemyBlinded) {
-            listener.onLog("- " + enemy.getName() + " is blinded by Shadowveil and misses the attack!");
-            enemyBlinded = false;
-        } else if (playerDodgeActive) {
-            listener.onLog("- You dodge " + enemy.getName() + "'s attack with WindWalk!");
+        // Defensive checks
+        if (playerDodgeActive) {
+            listener.onLog("- " + player.getName() + " dodged the attack!");
             playerDodgeActive = false;
-        } else if (playerShieldTurns > 0) {
-            int damage = Math.max(0, enemy.getAtk() - player.getDef());
-            int reduced = damage / 2;
-            player.setCurrentHealth(player.getCurrentHealth() - reduced);
-            listener.onLog("- Time Shield distorts impact! Damage reduced from " + damage + " to " + reduced + ".");
-            playerShieldTurns--;
-            listener.onUpdateHP(player, enemy);
         } else {
-            int damage = Math.max(0, enemy.getAtk() - player.getDef());
-            player.setCurrentHealth(player.getCurrentHealth() - damage);
-            listener.onLog("- " + enemy.getName() + " attacks! You take " + damage + " damage.");
-            listener.onUpdateHP(player, enemy);
+            int rawDamage = Math.max(1, enemy.getAttack() - player.getDefense());
+            if (playerShieldTurns > 0) {
+                rawDamage /= 2;
+                playerShieldTurns--;
+                listener.onLog("- Shield reduced damage to " + rawDamage + "!");
+            }
+            player.setCurrentHealth(player.getCurrentHealth() - rawDamage);
+            listener.onLog("- " + enemy.getName() + " deals " + rawDamage + " damage!");
         }
 
-        if (burnTurnsRemaining > 0 && enemy.isAlive()) {
-            // Already applied summary.
-        }
-
-        if (!enemy.isAlive()) {
-            handleEnemyDefeat();
-            return;
-        }
-
-        // No cooldown reductions during enemy actions.
-        // Cooldowns are reduced in playerUseSkill() after a player attack, so enemy
-        // turns only influence status/effects.
+        listener.onUpdateHP(player, enemy);
 
         if (player.isAlive()) {
             playerTurn = true;
             listener.onEnableSkillButtons(true);
             listener.onPlayerTurnPrompt();
         } else {
-            listener.onLog("- You were defeated...");
-            listener.onEnableSkillButtons(false);
             listener.onGameOver();
         }
     }
 
     private void handleEnemyDefeat() {
-        listener.onLog("- You defeated the " + enemy.getName() + "!");
-        listener.onEnableSkillButtons(false);
-
-        if ("Tutorial".equals(mode)) {
-            if (enemy instanceof Goblin) {
-                player.levelUp(0.10, 0.10);
-                listener.onShowStory(
-                        "The Goblin collapses, dropping a strange sigil...\nFrom the shadows, a hooded Cultist steps forward.");
-                enemy = new Cultist();
-                listener.onClearBattleLog();
-                listener.onUpdateHP(player, enemy);
-                listener.onLog("- A new foe approaches: " + enemy.getName() + "!");
-                listener.onEnableSkillButtons(true);
-                playerTurn = true;
-                listener.onUpdateSkillButtons(player.getSkills());
-                return;
-            }
-            if (enemy instanceof Cultist) {
-                listener.onStopMusic();
-                listener.onShowStory(
-                        "The Cultist's whisper fades: 'He... watches from the Rift...'\n\nA surge of energy pulls you through - the Realms shift.");
-                mode = "Realm1";
-                listener.onPlayMusic("/com/ror/model/Assets/sfx/AetheriaTheme.ogg", true);
-                listener.onShowStory(
-                        " REALM I: AETHERIA \n\nYou awaken beneath stormy skies - Aetheria.\nSky Serpents circle above, lightning dancing across their scales.");
-                listener.onSetBackground("/com/ror/model/Assets/Backgrounds/Aetheria.png");
-                enemy = new SkySerpent();
-                player.levelUp(0.10, 0.10);
-                healBetweenBattles();
-                listener.onClearBattleLog();
-                listener.onUpdateHP(player, enemy);
-                listener.onLog(
-                        "- You recall the experience from your fight with tutorial and use it to grow stronger! 💪");
-                listener.onLog("- A new foe approaches: " + enemy.getName() + "!");
-                listener.onEnableSkillButtons(true);
-                playerTurn = true;
-                listener.onUpdateSkillButtons(player.getSkills());
-                return;
-            }
+        listener.onLog("- " + enemy.getName() + " has been defeated!");
+        
+        //Realm Progression Logic (Linear, can be OOPd after Chito implements open world map)
+        if (enemy instanceof Goblin) {
+            player.levelUp(0.1, 0.1);
+            enemy = new Cultist();
+            listener.onLog("- A Cultist appears!");
+        } 
+        else if (enemy instanceof Cultist) {
+            transitionToRealm("Realm1", new SkySerpent(), "AETHERIA", "/com/ror/model/Assets/Backgrounds/Aetheria.png");
+        }
+        else if (enemy instanceof SkySerpent) {
+            player.levelUp(0.15, 0.15);
+            enemy = new GeneralZephra();
+            listener.onLog("- General Zephra descends!");
+        }
+        else if (enemy instanceof GeneralZephra) {
+            transitionToRealm("Realm2", new MoltenImp(), "IGNARA", "/com/ror/model/Assets/Backgrounds/Ignara.png");
+        }
+        else if (enemy instanceof MoltenImp) {
+            player.levelUp(0.1, 0.1);
+            enemy = new GeneralVulkrag();
+            listener.onLog("- General Vulkrag erupts from the magma!");
+        }
+        else if (enemy instanceof GeneralVulkrag) {
+            transitionToRealm("Realm3", new ShadowCreeper(), "NOXTERRA", "/com/ror/model/Assets/Backgrounds/Noxterra.png");
+        }
+        else if (enemy instanceof ShadowCreeper) {
+            player.levelUp(0.2, 0.2);
+            enemy = new GumohNahn(); // renamed from Vorthnar
+            listener.onLog("- Gumoh Nahn, The Eternal, has arrived.");
+        }
+        else if (enemy instanceof GumohNahn) {
+            listener.onGameWin();
         }
 
-        if ("Realm1".equals(mode)) {
-            if (enemy instanceof SkySerpent) {
-                listener.onShowStory(
-                        "The Sky Serpent bursts into feathers and lightning.\nFrom the thunderclouds above descends General Zephra, Storm Mage of the Rift.");
-                enemy = new GeneralZephra();
-                player.levelUp(0.15, 0.15);
-                healBetweenBattles();
-                listener.onClearBattleLog();
-                listener.onUpdateHP(player, enemy);
-                listener.onLog("- You leveled up!");
-                listener.onLog("- A new foe approaches: " + enemy.getName() + "!");
-                listener.onEnableSkillButtons(true);
-                playerTurn = true;
-                listener.onUpdateSkillButtons(player.getSkills());
-                return;
-            }
-            if (enemy instanceof GeneralZephra) {
-                listener.onStopMusic();
-                listener.onShowStory(
-                        "Zephra's thunderbird screeches as lightning fades.\nA fiery rift tears open beneath you...");
-                mode = "Realm2";
-                listener.onPlayMusic("/com/ror/model/Assets/sfx/IgnaraTheme.ogg", true);
-                listener.onSetBackground("/com/ror/model/Assets/Backgrounds/Ignara.png");
-                enemy = new MoltenImp();
-                healBetweenBattles();
-                listener.onUpdateHP(player, enemy);
-                listener.onLog("- Realm II: Ignara — molten chaos awaits!");
-                listener.onEnableSkillButtons(true);
-                playerTurn = true;
-                listener.onUpdateSkillButtons(player.getSkills());
-                return;
-            }
-        }
+        healBetweenBattles();
+        listener.onUpdateHP(player, enemy);
+        playerTurn = true;
+        listener.onEnableSkillButtons(true);
+    }
 
-        if ("Realm2".equals(mode)) {
-            if (enemy instanceof MoltenImp) {
-                player.levelUp(0.10, 0.10);
-                listener.onLog("- LEVEL UP!!!");
-                listener.onShowStory(
-                        "The last Molten Imp bursts into flame...\nFrom the magma rises General Vulkrag, the Infernal Commander!");
-                enemy = new GeneralVulkrag();
-                healBetweenBattles();
-                listener.onUpdateHP(player, enemy);
-                listener.onLog("- A new foe approaches: " + enemy.getName() + "!");
-                listener.onEnableSkillButtons(true);
-                playerTurn = true;
-                listener.onUpdateSkillButtons(player.getSkills());
-                return;
-            }
-            if (enemy instanceof GeneralVulkrag) {
-                listener.onStopMusic();
-                listener.onShowStory(
-                        "Vulkrag's molten armor cracks apart.\nDarkness seeps in from the edges of reality...");
-                mode = "Realm3";
-                listener.onPlayMusic("/com/ror/model/Assets/sfx/NoxterraTheme.ogg", true);
-                listener.onSetBackground("/com/ror/model/Assets/Backgrounds/Noxterra.png");
-                enemy = new ShadowCreeper();
-                player.levelUp(0.15, 0.15);
-                healBetweenBattles();
-                listener.onUpdateHP(player, enemy);
-                listener.onLog("- You noticeable feel stronger after defeating a general! 💪");
-                listener.onLog("- Realm III: Noxterra — the shadows hunger...");
-                listener.onEnableSkillButtons(true);
-                playerTurn = true;
-                listener.onUpdateSkillButtons(player.getSkills());
-                return;
-            }
-        }
-
-        if ("Realm3".equals(mode)) {
-            if (enemy instanceof ShadowCreeper) {
-                listener.onStopMusic();
-                listener.onShowStory(
-                        "The Shadow Creeper dissolves into mist...\nA dark laughter echoes — the Rift Lord himself descends.");
-                enemy = new Vorthnar();
-                player.levelUp(0.20, 0.20);
-                healBetweenBattles();
-                listener.onUpdateHP(player, enemy);
-                listener.onLog("- You feel a surge of power course through you!");
-                listener.onLog("- The final boss approaches: " + enemy.getName() + "!");
-                listener.onEnableSkillButtons(true);
-                playerTurn = true;
-                listener.onUpdateSkillButtons(player.getSkills());
-                listener.onPlaySoundThen("/com/ror/model/Assets/sfx/laugh.wav",
-                        () -> listener.onPlayMusic("/com/ror/model/Assets/sfx/Vorthar.ogg", true));
-                return;
-            }
-            if (enemy instanceof Vorthnar) {
-                // listener.onShowStory(
-                // "Vorthnar collapses — time itself shatters, then reforms.\n\n🏆 CHAPTER III
-                // COMPLETE 🏆\nYou have conquered the Realms!");
-                listener.onLog("🎉 You defeated Lord Vorthnar! Chapter III complete!");
-                listener.onEnableSkillButtons(false);
-                listener.onGameWin();
-            }
-        }
+    private void transitionToRealm(String newMode, Entity firstEnemy, String realmName, String bgPath) {
+        this.mode = newMode;
+        this.enemy = firstEnemy;
+        listener.onClearBattleLog();
+        listener.onSetBackground(bgPath);
+        listener.onShowStory("REALM: " + realmName);
+        listener.onLog("- Welcome to " + realmName);
     }
 
     private void healBetweenBattles() {

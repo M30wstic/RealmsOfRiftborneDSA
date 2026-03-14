@@ -1,5 +1,7 @@
-package com.ror.model;
+package com.ror.engine;
 
+import com.ror.model.Enemies.*;
+import com.ror.model.Entity;
 import com.ror.util.LinkedQueue;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -23,21 +25,21 @@ public class WorldManager {
     }
 
     private void loadWorlds() {
-        // 🌬️ Aetheria
+        //Aetheria
         LinkedQueue<Entity> aetheria = new LinkedQueue<>();
         aetheria.enqueue(new SkySerpent());
         aetheria.enqueue(new SkySerpent());
         aetheria.enqueue(new GeneralZephra());
         worlds.put("Aetheria", aetheria);
 
-        // 🔥 Ignara
+        //Ignara
         LinkedQueue<Entity> ignara = new LinkedQueue<>();
         ignara.enqueue(new MoltenImp());
         ignara.enqueue(new MoltenImp());
         ignara.enqueue(new GeneralVulkrag());
         worlds.put("Ignara", ignara);
 
-        // 🌑 Noxterra
+        //Noxterra
         LinkedQueue<Entity> noxterra = new LinkedQueue<>();
         noxterra.enqueue(new ShadowCreeper());
         noxterra.enqueue(new ShadowCreeper());
@@ -50,12 +52,12 @@ public class WorldManager {
 
         LinkedQueue<Entity> enemies = worlds.get(currentWorld);
 
-        // If the current world still has enemies
+        //If the current world still has enemies
         if (enemies != null && !enemies.isEmpty()) {
             return enemies.dequeue();
         }
 
-        // If current world cleared, move to the next
+        //If current world cleared, move to the next
         if (worldIterator.hasNext()) {
             currentWorld = worldIterator.next();
             System.out.println("\n🌍 Entering " + currentWorld + "!");
@@ -67,7 +69,7 @@ public class WorldManager {
             finalBossUnlocked = true;
             currentWorld = "Final Battle";
             System.out.println("\n⚡ The Final Battle Begins! ⚡");
-            return new Vorthnar();
+            return new GumohNahn();
         }
 
         // Game finished
